@@ -59,8 +59,9 @@ Compile the complete gallery with:
 typst compile --root . examples/poses.typ build/poses.pdf
 ```
 
-The detailed guide, including three camera views of one unchanged 3D pose, is
-in `manual.typ`. Compile it with:
+The [compiled manual](manual.pdf) includes three camera views of one unchanged
+3D pose, pose variation guidance, and the complete API reference. Rebuild it
+from `manual.typ` with Premetadated available in the local package path:
 
 ```sh
 typst compile manual.typ build/manual.pdf
