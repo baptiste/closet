@@ -313,6 +313,193 @@ gives useful scene diversity without changing the gesture. Torso and body-side
 axes receive a smaller perturbation than limbs. All directions are normalized
 after perturbation, so bone lengths remain fixed.
 
+#pagebreak()
+= Hand gestures
+
+The hand model follows the standard 21-landmark topology: one wrist, four thumb
+landmarks, and four landmarks for each finger. It is a small procedural model,
+not a general anatomical simulator. Canonical gestures store finger `curl` and
+`spread`, thumb opposition, global spread, and wrist orientation. Closet
+expands those controls into constrained joint angles and fixed-length 3D bones,
+then uses the same camera projection and Premetadated pen as `human`.
+
+== Canonical gestures
+
+#let hand-view = closet.camera(
+  eye: (2.4, -7.0, 3.0),
+  target: (0.0, 0.0, 0.65),
+  focal-length: 6.5,
+)
+#let hand-gallery = (
+  ("open-palm", [Open palm]),
+  ("fist", [Fist]),
+  ("pointing", [Pointing]),
+  ("peace", [V / peace]),
+  ("thumbs-up", [Thumbs-up]),
+  ("pinch", [Pinch / OK]),
+  ("three-fingers", [Three fingers]),
+  ("rock", [Rock]),
+  ("beckoning", [Beckoning]),
+)
+#grid(
+  columns: (1fr,) * 3,
+  column-gutter: 9mm,
+  row-gutter: 2mm,
+  ..hand-gallery.map(item => sample-panel(
+    item.at(1),
+    closet.hand(gesture: item.at(0), scale: 1.55, camera: hand-view),
+    height: 29mm,
+  )),
+)
+
+```typ
+#hand(
+  gesture: "peace",
+  handedness: "right",
+  camera: camera(
+    eye: (2.4, -7.0, 3.0),
+    target: (0.0, 0.0, 0.65),
+    focal-length: 6.5,
+  ),
+)
+```
+
+The built-in names are `open-palm`, `fist`, `pointing`, `peace`, `thumbs-up`,
+`pinch`, `three-fingers`, `rock`, and `beckoning`; `ok` aliases `pinch`. Set
+`handedness: "left"` to mirror the complete 3D skeleton before wrist rotation.
+
+== Volumetric tube rendering
+
+The default `render: "tube"` sends each 3D finger chain and thicker metacarpal
+paths through Premetadated's tube renderer, then adds an oblate ellipsoid for
+the palm. The solids currently overlap with visible seams; a future Larnt-level
+union can remove those boundaries. Use `render: "skeleton"` to inspect the
+projected landmark centerlines. Sparse light-directed hatching distinguishes
+phalanges and depth without stippling; set `shading: false` for outlines only.
+Both modes use the same gesture, landmarks, handedness, and camera.
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 12mm,
+  sample-panel([Projected skeleton], closet.hand(
+    gesture: "peace",
+    render: "skeleton",
+    scale: 1.75,
+    camera: hand-view,
+  )),
+  sample-panel([Volumetric tubes], closet.hand(
+    gesture: "peace",
+    render: "tube",
+    tube-radius: 0.05,
+    scale: 1.75,
+    camera: hand-view,
+  )),
+)
+
+```typ
+#hand(
+  gesture: "peace",
+  render: "tube",
+  tube-radius: 0.05,
+  tube-sides: 10,
+  shading: true,
+  camera: view,
+)
+```
+
+`tube-radius` is measured in the hand model's 3D units. `tube-sides` controls
+cross-section smoothness and must be at least six. `shading` enables sparse
+line hatching on the tubes and palm; it never uses stippling. The tube renderer
+derives its field of view from Closet's camera focal length, so changing `eye`,
+`target`, `up`, or `focal-length` works consistently in both modes.
+
+== Defining a hand pose
+
+`hand-pose(...)` supplies straight-finger defaults. Finger `curl` runs from `0`
+to `1`; per-finger `spread` runs from `-1` to `1`; global `spread` runs from `0`
+to `1.5`. Thumb `opposition` runs from `0` to `1`. Wrist pitch and yaw are
+limited to $plus.minus 45 degree$, and roll to $plus.minus 90 degree$.
+
+```typ
+#let custom = hand-pose(
+  thumb: (curl: 0.35, spread: 0.1, opposition: 0.8),
+  index: (curl: 0.05, spread: -0.35),
+  middle: (curl: 0.2, spread: 0.15),
+  ring: (curl: 0.75, spread: 0.1),
+  pinky: (curl: 0.9, spread: 0.2),
+  spread: 0.7,
+  wrist: (pitch: 8deg, yaw: -12deg, roll: 5deg),
+)
+
+#hand(gesture: custom)
+```
+
+#let custom-hand-illustration = closet.hand-pose(
+  thumb: (curl: 0.35, spread: 0.1, opposition: 0.8),
+  index: (curl: 0.05, spread: -0.35),
+  middle: (curl: 0.2, spread: 0.15),
+  ring: (curl: 0.75, spread: 0.1),
+  pinky: (curl: 0.9, spread: 0.2),
+  spread: 0.7,
+  wrist: (pitch: 8deg, yaw: -12deg, roll: 5deg),
+)
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 12mm,
+  sample-panel([Right hand], closet.hand(
+    gesture: custom-hand-illustration,
+    scale: 1.75,
+    camera: hand-view,
+  )),
+  sample-panel([Mirrored left hand], closet.hand(
+    gesture: custom-hand-illustration,
+    handedness: "left",
+    scale: 1.75,
+    camera: hand-view,
+  )),
+)
+
+== Angles, landmarks, and variation
+
+`hand-angles(gesture, variation:, seed:)` exposes the expanded MCP/PIP/DIP
+angles. The four long fingers use maximum flexions of $70 degree$, $95 degree$,
+and $65 degree$; thumb CMC/MCP/IP maxima are $40 degree$, $55 degree$, and
+$60 degree$. Because all three joints derive from one varied curl value, their
+motion remains correlated.
+
+`hand-joints(gesture, variation:, seed:, handedness:)` returns the 21 named 3D
+points: `wrist`; `thumb-cmc`, `thumb-mcp`, `thumb-ip`, `thumb-tip`; and MCP, PIP,
+DIP, and tip points for index, middle, ring, and pinky. `hand-topology` exposes
+the five connected chains. This matches MediaPipe's topology and terminology,
+without adding MediaPipe or an ML runtime dependency.
+
+```typ
+#let landmarks = hand-joints("pointing")
+#let variants = range(5).map(seed =>
+  vary-hand("pointing", variation: 0.07, seed: seed)
+)
+```
+
+#grid(
+  columns: (1fr,) * 5,
+  gutter: 4mm,
+  ..range(5).map(seed => sample-panel(
+    [Seed #seed],
+    closet.hand(
+      gesture: "pointing",
+      variation: 0.07,
+      seed: seed,
+      scale: 1.35,
+      camera: hand-view,
+    ),
+    height: 27mm,
+  )),
+)
+
+Variation is deterministic and bounded to `0..0.25`. It perturbs each finger's
+shared curl, lateral spread, thumb opposition, and wrist orientation, then
+clamps every value before angle expansion. Segment lengths never change.
+
 = Camera and projection
 
 Create a perspective camera with:
@@ -511,6 +698,21 @@ ranges alone do not guarantee a realistic combined pose, and the Gait2354
 ranges are model domains rather than universal physiological safety limits.
 
 = API reference
+
+== `hand`, `hand-pose`, and `hand-gestures`
+
+`hand(gesture:, variation:, seed:, handedness:, render:, tube-radius:,
+tube-sides:, shading:, scale:, stroke:, pen:, camera:)` renders a procedural hand.
+`render` accepts `"skeleton"` or `"tube"`. `hand-pose(...)` creates compact
+finger controls, and `hand-gestures` contains the canonical dictionaries.
+
+== `hand-angles`, `hand-joints`, and `vary-hand`
+
+`hand-angles(gesture, variation:, seed:)` expands controls into constrained
+angles. `hand-joints(gesture, variation:, seed:, handedness:)` evaluates the 21
+3D landmarks. `vary-hand(gesture, variation:, seed:)` returns a reproducibly
+perturbed control dictionary. `hand-topology` and `hand-joint-limits` expose the
+connectivity and limits used by the model.
 
 == `pose`
 

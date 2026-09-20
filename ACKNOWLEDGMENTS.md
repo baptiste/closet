@@ -15,6 +15,11 @@ relationships and their roles in the project.
 
 ## Biomechanical data
 
+- [MediaPipe Hand Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker)
+  provides the naming and connectivity reference for Closet's 21-point hand
+  topology. Closet does not include MediaPipe, its models, or training data;
+  the runtime hand is an original procedural model.
+
 - [OpenSim](https://opensim.stanford.edu/) provides the articulated-model and
   inverse-kinematics formats used by the offline importer.
 - The checked-in `data/gait2354.json` and test fixtures are derived from the

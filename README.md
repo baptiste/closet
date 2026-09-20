@@ -146,6 +146,46 @@ The available modifiers are `tilt-head`, `bend-torso`, `raise-arms`,
 `examples/gestures.typ` and the compiled manual for direct construction,
 parameter ranges, and side selection.
 
+## Hand gestures
+
+Closet also provides a procedural 3D hand based on the standard 21-landmark
+topology. Canonical gestures are compact finger controls rather than stored
+drawings, and use the same camera and calligraphic renderer as full figures:
+
+![Nine procedural hand gestures](assets/previews/hands.png)
+
+```typ
+#import "lib.typ": camera, hand
+
+#hand(
+  gesture: "peace",
+  handedness: "right",
+  tube-radius: 0.05,
+  variation: 0.06,
+  seed: 4,
+  camera: camera(
+    eye: (2.4, -7.0, 3.0),
+    target: (0.0, 0.0, 0.65),
+    focal-length: 6.5,
+  ),
+)
+```
+
+Built-ins are `open-palm`, `fist`, `pointing`, `peace`, `thumbs-up`, `pinch`
+(`ok` is an alias), `three-fingers`, `rock`, and `beckoning`. Use
+`hand-pose(...)` for custom finger curl, spread, thumb opposition, and wrist
+orientation. `hand-angles(...)` exposes constrained joint angles;
+`hand-joints(...)` returns all 21 landmarks; and `vary-hand(...)` creates
+deterministic correlated variation. The default `render: "tube"` passes the 3D
+chains through Premetadated's hidden-line renderer as finger tubes, thicker
+metacarpal tubes, and an oblate palm ellipsoid. Use `render: "skeleton"` to
+inspect projected landmark centerlines. The solids retain seams until union is
+available at the Larnt level. Sparse line hatching adds depth without the cost
+of stippling; set `shading: false` for outlines only. See
+`examples/hand-tubes.typ` for a side-by-side comparison.
+
+![V hand as projected skeleton and volumetric tubes](assets/previews/hand-tubes.png)
+
 Pose vectors use `(x, y, z)`, where `x` is image-right in a front-facing pose,
 `y` is depth, and `z` is up. Each upper and lower limb segment has an independent
 3D direction. `poses` exposes the canonical dictionaries, while `joints(pose)`

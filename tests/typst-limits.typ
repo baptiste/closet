@@ -1,4 +1,4 @@
-#import "../lib.typ": bend-torso, constrain-pose, joints, pose, pose-from-degrees, poses, project, raise-arms, spread-legs, stretch-arms, tilt-head, vary-pose, walk-legs, wave-arms
+#import "../lib.typ": bend-torso, constrain-pose, hand-angles, hand-gestures, hand-joint-limits, hand-joints, hand-pose, hand-topology, joints, pose, pose-from-degrees, poses, project, raise-arms, spread-legs, stretch-arms, tilt-head, vary-hand, vary-pose, walk-legs, wave-arms
 
 #let limits = json("../data/gait2354.json").limits
 #let outside = poses.running
@@ -118,3 +118,43 @@
 #assert(stepped.right-upper-leg.at(1) > 0)
 #let waving = wave-arms("standing", amount: 1, side: "right")
 #assert(waving.right-upper-arm.at(2) > 0)
+
+#let requested-hand-gestures = (
+	"open-palm", "fist", "pointing", "peace", "thumbs-up",
+	"pinch", "ok", "three-fingers", "rock", "beckoning",
+)
+#for name in requested-hand-gestures {
+	assert(name in hand-gestures, message: "missing canonical hand gesture: " + name)
+	assert.eq(hand-joints(name).len(), 21)
+}
+#assert.eq(hand-topology.len(), 5)
+#let open-hand = hand-joints("open-palm")
+#assert(calc.abs(distance(open-hand.index-mcp, open-hand.index-pip) - 0.43) < 0.00001)
+#assert(calc.abs(distance(open-hand.index-pip, open-hand.index-dip) - 0.27) < 0.00001)
+#assert(calc.abs(distance(open-hand.thumb-ip, open-hand.thumb-tip) - 0.23) < 0.00001)
+#let fist-hand = hand-joints("fist")
+#let pointing-hand = hand-joints("pointing")
+#assert(pointing-hand.index-tip.at(2) > fist-hand.index-tip.at(2) + 0.6)
+#let peace-hand = hand-joints("peace")
+#assert(peace-hand.index-tip.at(2) > peace-hand.ring-tip.at(2) + 0.5)
+#assert(peace-hand.middle-tip.at(2) > peace-hand.pinky-tip.at(2) + 0.5)
+#let thumbs-up-hand = hand-joints("thumbs-up")
+#assert(thumbs-up-hand.thumb-tip.at(2) > fist-hand.thumb-tip.at(2))
+#let pinch-hand = hand-joints("pinch")
+#assert(distance(pinch-hand.thumb-tip, pinch-hand.index-tip) < 0.35)
+#let left-open-hand = hand-joints("open-palm", handedness: "left")
+#assert(calc.abs(left-open-hand.index-tip.at(0) + open-hand.index-tip.at(0)) < 0.00001)
+#assert.eq(left-open-hand.index-tip.at(1), open-hand.index-tip.at(1))
+#let hand-variation-a = vary-hand("open-palm", variation: 0.08, seed: 11)
+#let hand-variation-b = vary-hand("open-palm", variation: 0.08, seed: 12)
+#assert.eq(hand-variation-a, vary-hand("open-palm", variation: 0.08, seed: 11))
+#assert.ne(hand-variation-a, hand-variation-b)
+#let varied-hand = hand-joints(hand-variation-a)
+#assert(calc.abs(distance(varied-hand.middle-mcp, varied-hand.middle-pip) - 0.47) < 0.00001)
+#let varied-angles = hand-angles(hand-variation-a)
+#assert(varied-angles.index.mcp >= hand-joint-limits.finger-mcp.minimum)
+#assert(varied-angles.index.mcp <= hand-joint-limits.finger-mcp.maximum)
+#assert(varied-angles.wrist.pitch >= hand-joint-limits.wrist-pitch.minimum)
+#assert(varied-angles.wrist.pitch <= hand-joint-limits.wrist-pitch.maximum)
+#let custom-hand = hand-pose(index: (curl: 0.5, spread: -0.2), wrist: (pitch: 5deg))
+#assert.eq(hand-joints(custom-hand).len(), 21)

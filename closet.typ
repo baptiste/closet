@@ -532,3 +532,415 @@
     )
   })
 }
+
+#let _clamp(value, minimum, maximum) = calc.min(calc.max(value, minimum), maximum)
+
+#let _hand-finger(parameters, name, thumb: false) = {
+  assert(type(parameters) == dictionary, message: name + " parameters must be a dictionary")
+  let curl = parameters.at("curl", default: 0.0)
+  let spread = parameters.at("spread", default: 0.0)
+  assert(curl >= 0 and curl <= 1, message: name + " curl must be between 0 and 1")
+  assert(spread >= -1 and spread <= 1, message: name + " spread must be between -1 and 1")
+  let result = (curl: curl, spread: spread)
+  if thumb {
+    let opposition = parameters.at("opposition", default: 0.15)
+    assert(opposition >= 0 and opposition <= 1, message: "thumb opposition must be between 0 and 1")
+    result.insert("opposition", opposition)
+  }
+  result
+}
+
+#let hand-pose(
+  thumb: (curl: 0.0, spread: 0.25, opposition: 0.15),
+  index: (curl: 0.0, spread: 0.0),
+  middle: (curl: 0.0, spread: 0.0),
+  ring: (curl: 0.0, spread: 0.0),
+  pinky: (curl: 0.0, spread: 0.0),
+  spread: 1.0,
+  wrist: (pitch: 0deg, yaw: 0deg, roll: 0deg),
+) = {
+  assert(spread >= 0 and spread <= 1.5, message: "hand spread must be between 0 and 1.5")
+  assert(type(wrist) == dictionary, message: "wrist orientation must be a dictionary")
+  for name in ("pitch", "yaw", "roll") {
+    assert(type(wrist.at(name, default: 0deg)) == angle, message: "wrist " + name + " must be an angle")
+  }
+  assert(calc.abs(wrist.at("pitch", default: 0deg)) <= 45deg, message: "wrist pitch must be between -45deg and 45deg")
+  assert(calc.abs(wrist.at("yaw", default: 0deg)) <= 45deg, message: "wrist yaw must be between -45deg and 45deg")
+  assert(calc.abs(wrist.at("roll", default: 0deg)) <= 90deg, message: "wrist roll must be between -90deg and 90deg")
+  (
+    thumb: _hand-finger(thumb, "thumb", thumb: true),
+    index: _hand-finger(index, "index"),
+    middle: _hand-finger(middle, "middle"),
+    ring: _hand-finger(ring, "ring"),
+    pinky: _hand-finger(pinky, "pinky"),
+    spread: spread,
+    wrist: (
+      pitch: wrist.at("pitch", default: 0deg),
+      yaw: wrist.at("yaw", default: 0deg),
+      roll: wrist.at("roll", default: 0deg),
+    ),
+  )
+}
+
+#let _open-hand = hand-pose()
+#let _fist-hand = hand-pose(
+  thumb: (curl: 0.72, spread: 0.05, opposition: 0.78),
+  index: (curl: 0.96),
+  middle: (curl: 1.0),
+  ring: (curl: 1.0),
+  pinky: (curl: 0.94),
+  spread: 0.15,
+)
+#let _pointing-hand = hand-pose(
+  thumb: (curl: 0.58, spread: 0.05, opposition: 0.72),
+  index: (curl: 0.02),
+  middle: (curl: 0.98),
+  ring: (curl: 1.0),
+  pinky: (curl: 0.94),
+  spread: 0.25,
+)
+#let _peace-hand = hand-pose(
+  thumb: (curl: 0.62, spread: 0.0, opposition: 0.72),
+  index: (curl: 0.02, spread: -0.35),
+  middle: (curl: 0.02, spread: 0.35),
+  ring: (curl: 0.98),
+  pinky: (curl: 0.94),
+  spread: 0.55,
+)
+#let _thumbs-up-hand = hand-pose(
+  thumb: (curl: 0.02, spread: -1.0, opposition: 0.0),
+  index: (curl: 0.96),
+  middle: (curl: 1.0),
+  ring: (curl: 1.0),
+  pinky: (curl: 0.94),
+  spread: 0.1,
+)
+#let _pinch-hand = hand-pose(
+  thumb: (curl: 0.42, spread: -0.1, opposition: 1.0),
+  index: (curl: 0.48, spread: -0.15),
+  middle: (curl: 0.08, spread: 0.1),
+  ring: (curl: 0.12, spread: 0.18),
+  pinky: (curl: 0.18, spread: 0.25),
+  spread: 0.7,
+)
+#let _three-fingers-hand = hand-pose(
+  thumb: (curl: 0.65, spread: 0.0, opposition: 0.72),
+  index: (curl: 0.02, spread: -0.22),
+  middle: (curl: 0.02),
+  ring: (curl: 0.03, spread: 0.22),
+  pinky: (curl: 0.94),
+  spread: 0.65,
+)
+#let _rock-hand = hand-pose(
+  thumb: (curl: 0.62, spread: 0.0, opposition: 0.7),
+  index: (curl: 0.02, spread: -0.2),
+  middle: (curl: 1.0),
+  ring: (curl: 1.0),
+  pinky: (curl: 0.02, spread: 0.35),
+  spread: 0.72,
+)
+#let _beckoning-hand = hand-pose(
+  thumb: (curl: 0.5, spread: 0.1, opposition: 0.62),
+  index: (curl: 0.48, spread: -0.12),
+  middle: (curl: 0.9),
+  ring: (curl: 0.96),
+  pinky: (curl: 0.9),
+  spread: 0.35,
+  wrist: (pitch: -6deg, yaw: 0deg, roll: 0deg),
+)
+
+#let hand-gestures = (
+  open-palm: _open-hand,
+  fist: _fist-hand,
+  pointing: _pointing-hand,
+  peace: _peace-hand,
+  thumbs-up: _thumbs-up-hand,
+  pinch: _pinch-hand,
+  ok: _pinch-hand,
+  three-fingers: _three-fingers-hand,
+  rock: _rock-hand,
+  beckoning: _beckoning-hand,
+)
+
+#let hand-topology = (
+  ("wrist", "thumb-cmc", "thumb-mcp", "thumb-ip", "thumb-tip"),
+  ("wrist", "index-mcp", "index-pip", "index-dip", "index-tip"),
+  ("wrist", "middle-mcp", "middle-pip", "middle-dip", "middle-tip"),
+  ("wrist", "ring-mcp", "ring-pip", "ring-dip", "ring-tip"),
+  ("wrist", "pinky-mcp", "pinky-pip", "pinky-dip", "pinky-tip"),
+)
+
+#let hand-joint-limits = (
+  finger-mcp: (minimum: 0deg, maximum: 70deg),
+  finger-pip: (minimum: 0deg, maximum: 95deg),
+  finger-dip: (minimum: 0deg, maximum: 65deg),
+  thumb-cmc: (minimum: 0deg, maximum: 40deg),
+  thumb-mcp: (minimum: 0deg, maximum: 55deg),
+  thumb-ip: (minimum: 0deg, maximum: 60deg),
+  wrist-pitch: (minimum: -45deg, maximum: 45deg),
+  wrist-yaw: (minimum: -45deg, maximum: 45deg),
+  wrist-roll: (minimum: -90deg, maximum: 90deg),
+)
+
+#let _resolve-hand(gesture) = {
+  if type(gesture) == str {
+    assert(gesture in hand-gestures, message: "unknown hand gesture: " + gesture)
+    hand-gestures.at(gesture)
+  } else {
+    assert(type(gesture) == dictionary, message: "hand gesture must be a name or hand-pose dictionary")
+    gesture
+  }
+}
+
+#let vary-hand(gesture, variation: 0.08, seed: 0) = {
+  assert(type(seed) == int, message: "hand variation seed must be an integer")
+  assert(variation >= 0 and variation <= 0.25, message: "hand variation must be between 0 and 0.25")
+  let varied = _resolve-hand(gesture)
+  if variation == 0 {
+    return varied
+  }
+  for (index, name) in ("thumb", "index", "middle", "ring", "pinky").enumerate() {
+    let finger = varied.at(name)
+    let shared = _noise(seed + 101, index * 3) * variation
+    finger.insert("curl", _clamp(finger.curl + shared, 0.0, 1.0))
+    finger.insert("spread", _clamp(finger.spread + _noise(seed + 101, index * 3 + 1) * variation * 0.55, -1.0, 1.0))
+    if name == "thumb" {
+      finger.insert("opposition", _clamp(finger.opposition + _noise(seed + 101, index * 3 + 2) * variation * 0.45, 0.0, 1.0))
+    }
+    varied.insert(name, finger)
+  }
+  let wrist = varied.wrist
+  wrist.insert("pitch", _clamp(wrist.pitch + _noise(seed + 101, 20) * variation * 9deg, -45deg, 45deg))
+  wrist.insert("yaw", _clamp(wrist.yaw + _noise(seed + 101, 21) * variation * 9deg, -45deg, 45deg))
+  wrist.insert("roll", _clamp(wrist.roll + _noise(seed + 101, 22) * variation * 9deg, -90deg, 90deg))
+  varied.insert("wrist", wrist)
+  varied
+}
+
+#let hand-angles(gesture, variation: 0.0, seed: 0) = {
+  let selected = vary-hand(gesture, variation: variation, seed: seed)
+  let result = (
+    wrist: selected.wrist,
+    spread: selected.spread,
+  )
+  for name in ("index", "middle", "ring", "pinky") {
+    let finger = selected.at(name)
+    result.insert(name, (
+      mcp: finger.curl * hand-joint-limits.finger-mcp.maximum,
+      pip: finger.curl * hand-joint-limits.finger-pip.maximum,
+      dip: finger.curl * hand-joint-limits.finger-dip.maximum,
+      spread: finger.spread,
+    ))
+  }
+  let thumb = selected.thumb
+  result.insert("thumb", (
+    cmc: thumb.curl * hand-joint-limits.thumb-cmc.maximum,
+    mcp: thumb.curl * hand-joint-limits.thumb-mcp.maximum,
+    ip: thumb.curl * hand-joint-limits.thumb-ip.maximum,
+    spread: thumb.spread,
+    opposition: thumb.opposition,
+  ))
+  result
+}
+
+#let _rotate-x(point, angle) = (
+  point.at(0),
+  point.at(1) * calc.cos(angle) - point.at(2) * calc.sin(angle),
+  point.at(1) * calc.sin(angle) + point.at(2) * calc.cos(angle),
+)
+#let _rotate-y(point, angle) = (
+  point.at(0) * calc.cos(angle) + point.at(2) * calc.sin(angle),
+  point.at(1),
+  -point.at(0) * calc.sin(angle) + point.at(2) * calc.cos(angle),
+)
+#let _rotate-z(point, angle) = (
+  point.at(0) * calc.cos(angle) - point.at(1) * calc.sin(angle),
+  point.at(0) * calc.sin(angle) + point.at(1) * calc.cos(angle),
+  point.at(2),
+)
+
+#let _orient-hand-point(point, wrist, handedness) = {
+  let oriented = if handedness == "left" { (-point.at(0), point.at(1), point.at(2)) } else { point }
+  oriented = _rotate-x(oriented, wrist.pitch)
+  oriented = _rotate-y(oriented, wrist.yaw)
+  _rotate-z(oriented, wrist.roll)
+}
+
+#let _finger-chain(base, lengths, angles, spread) = {
+  let directions = ()
+  let flexion = 0deg
+  for angle in angles {
+    flexion += angle
+    directions.push(_unit((
+      calc.sin(spread) * calc.cos(flexion),
+      -calc.sin(flexion),
+      calc.cos(spread) * calc.cos(flexion),
+    )))
+  }
+  _chain(base, lengths, directions)
+}
+
+#let hand-joints(gesture, variation: 0.0, seed: 0, handedness: "right") = {
+  assert(handedness in ("right", "left"), message: "handedness must be right or left")
+  let angles = hand-angles(gesture, variation: variation, seed: seed)
+  let wrist = (0.0, 0.0, 0.0)
+  let finger-data = (
+    index: (base: (-0.28, 0.0, 0.61), lengths: (0.43, 0.27, 0.20), spread: -8deg),
+    middle: (base: (-0.09, 0.0, 0.67), lengths: (0.47, 0.30, 0.22), spread: -2deg),
+    ring: (base: (0.12, 0.0, 0.64), lengths: (0.44, 0.28, 0.21), spread: 5deg),
+    pinky: (base: (0.31, 0.0, 0.55), lengths: (0.34, 0.22, 0.17), spread: 13deg),
+  )
+  let local = (wrist: wrist)
+  for name in ("index", "middle", "ring", "pinky") {
+    let anatomy = finger-data.at(name)
+    let finger = angles.at(name)
+    let spread = anatomy.spread * angles.spread + finger.spread * 12deg
+    let chain = _finger-chain(
+      anatomy.base,
+      anatomy.lengths,
+      (finger.mcp, finger.pip, finger.dip),
+      spread,
+    )
+    for (joint, point) in ("mcp", "pip", "dip", "tip").zip(chain) {
+      local.insert(name + "-" + joint, point)
+    }
+  }
+  let thumb = angles.thumb
+  let thumb-cmc = (-0.42, -0.02, 0.25)
+  let thumb-spread = 45deg + thumb.spread * 32deg
+  let thumb-flexions = (thumb.cmc, thumb.cmc + thumb.mcp, thumb.cmc + thumb.mcp + thumb.ip)
+  let thumb-lengths = (0.34, 0.28, 0.23)
+  let thumb-points = (thumb-cmc,)
+  let thumb-point = thumb-cmc
+  let index-target = local.at("index-tip")
+  for (index, pair) in thumb-lengths.zip(thumb-flexions).enumerate() {
+    let (length, flexion) = pair
+    let natural = _unit((
+      -calc.sin(thumb-spread) * calc.cos(flexion),
+      -calc.sin(flexion + thumb.opposition * 22deg),
+      calc.cos(thumb-spread) * calc.cos(flexion),
+    ))
+    let toward-index = _unit(_sub(index-target, thumb-point))
+    let opposition = thumb.opposition * (0.35 + index * 0.25)
+    thumb-point = _step(thumb-point, length, _blend-direction(natural, toward-index, _clamp(opposition, 0.0, 1.0)))
+    thumb-points.push(thumb-point)
+  }
+  for (joint, point) in ("cmc", "mcp", "ip", "tip").zip(thumb-points) {
+    local.insert("thumb-" + joint, point)
+  }
+  local.map(point => _orient-hand-point(point, angles.wrist, handedness))
+}
+
+#let hand(
+  gesture: "open-palm",
+  variation: 0.0,
+  seed: 0,
+  handedness: "right",
+  render: "tube",
+  tube-radius: 0.045,
+  tube-sides: 10,
+  shading: true,
+  scale: 2.0,
+  stroke: black,
+  pen: none,
+  camera: default-camera,
+) = {
+  assert(scale > 0, message: "hand scale must be positive")
+  assert(render in ("skeleton", "tube"), message: "hand render must be skeleton or tube")
+  assert(tube-radius > 0, message: "hand tube radius must be positive")
+  assert(type(tube-sides) == int and tube-sides >= 6, message: "hand tube sides must be an integer of at least 6")
+  assert(type(shading) == bool, message: "hand shading must be boolean")
+  let landmarks = hand-joints(
+    gesture,
+    variation: variation,
+    seed: seed,
+    handedness: handedness,
+  )
+  let transform(point) = {
+    let projected = project(point, camera: camera)
+    (projected.at(0) * scale, projected.at(1) * scale)
+  }
+  let selected-pen = if pen == none {
+    (
+      mode: "calligraphic",
+      offset: 24deg,
+      samples: ((arclength: 0, a: 0.025 * scale, b: 0.008 * scale),),
+    )
+  } else {
+    pen
+  }
+  if render == "tube" {
+    let geometry = premetadated.geometry
+    let tube-pen = if pen == none {
+      (0.012 * scale, 0.0035 * scale, 24deg)
+    } else {
+      pen
+    }
+    let light = (-1.0, -0.5, 1.0)
+    let finger-pattern = if shading {
+      (geometry.texture.lit-hatch)(light: light, count: 2, length: 0.045, crosshatch: 0.0)
+    } else {
+      (geometry.texture.outline)()
+    }
+    let palm-pattern = if shading {
+      (geometry.texture.lit-hatch)(light: light, count: 18, length: 0.06, crosshatch: 0.0)
+    } else {
+      (geometry.texture.outline)()
+    }
+    let finger-shapes = hand-topology.map(chain => chain.slice(1).windows(2).map(pair => geometry.tube(
+      pair.map(name => landmarks.at(name)),
+      radius: tube-radius,
+      sides: tube-sides,
+      pattern: finger-pattern,
+    ))).flatten()
+    let palm-anchors = ("thumb-cmc", "index-mcp", "middle-mcp", "ring-mcp", "pinky-mcp")
+    let palm-shapes = palm-anchors.map(name => geometry.tube(
+      (landmarks.wrist, landmarks.at(name)),
+      radius: tube-radius * 1.45,
+      sides: tube-sides,
+      pattern: finger-pattern,
+    ))
+    let palm-center = _add(landmarks.wrist, _mul(_sub(landmarks.middle-mcp, landmarks.wrist), 0.52))
+    let palm-volume = geometry.ellipsoid(
+      palm-center,
+      (0.39, 0.11, 0.34),
+      pattern: palm-pattern,
+    )
+    let shapes = finger-shapes + palm-shapes + (palm-volume,)
+    let viewport-height = 4.0
+    let fovy = 2 * calc.atan(viewport-height / (2 * camera.focal-length * scale)) / 1deg
+    return cetz.canvas(length: 1cm, {
+      geometry.render(
+        ..shapes,
+        eye: camera.eye,
+        center: camera.target,
+        up: camera.up,
+        width: 4.2,
+        height: viewport-height,
+        fovy: fovy,
+        step: 0.015,
+        pen: tube-pen,
+        epsilon: 0.002,
+        fill: stroke,
+      )
+    })
+  }
+  cetz.canvas(length: 1cm, {
+    for chain in hand-topology {
+      pen-stroke.nib-polylines(
+        (chain.map(name => transform(landmarks.at(name))),),
+        pen: selected-pen,
+        epsilon: 0.002,
+        fill: stroke,
+      )
+    }
+    let palm-outline = ("thumb-cmc", "index-mcp", "middle-mcp", "ring-mcp", "pinky-mcp", "wrist")
+    pen-stroke.nib-stroke(
+      pen-stroke.polyline-path(palm-outline.map(name => transform(landmarks.at(name)))),
+      pen: selected-pen,
+      closed: true,
+      epsilon: 0.002,
+      fill: stroke,
+    )
+  })
+}
