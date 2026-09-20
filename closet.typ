@@ -916,11 +916,27 @@
     } else {
       (geometry.texture.outline)()
     }
-    let finger-shapes = hand-topology.map(chain => chain.slice(1).windows(2).map(pair => geometry.tube(
-      pair.map(name => landmarks.at(name)),
-      radius: tube-radius,
-      sides: tube-sides,
-      pattern: finger-pattern,
+    let radius-profiles = (
+      (1.12, 1.02),
+      (1.02, 0.9),
+      (0.9, 0.72),
+    )
+    let finger-shapes = ()
+    for chain in hand-topology {
+      for (segment-index, pair) in chain.slice(1).windows(2).enumerate() {
+        finger-shapes.push(geometry.tube(
+          pair.map(name => landmarks.at(name)),
+          radius: radius-profiles.at(segment-index).map(factor => tube-radius * factor),
+          sides: tube-sides,
+          cap: "round",
+          pattern: finger-pattern,
+        ))
+      }
+    }
+    let joint-shapes = hand-topology.map(chain => chain.slice(1, 3).map(name => geometry.sphere(
+      landmarks.at(name),
+      tube-radius * 1.12,
+      pattern: (geometry.texture.outline)(),
     ))).flatten()
     let palm-anchors = ("thumb-cmc", "index-mcp", "middle-mcp", "ring-mcp", "pinky-mcp")
     let palm-shapes = palm-anchors.map(name => geometry.tube(
@@ -935,7 +951,7 @@
       (0.39, 0.11, 0.34),
       pattern: palm-pattern,
     )
-    let shapes = finger-shapes + palm-shapes + (palm-volume,)
+    let shapes = finger-shapes + joint-shapes + palm-shapes + (palm-volume,)
     let viewport-height = 4.0
     let fovy = 2 * calc.atan(viewport-height / (2 * camera.focal-length * scale)) / 1deg
     return cetz.canvas(length: 1cm, {

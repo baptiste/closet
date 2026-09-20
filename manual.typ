@@ -456,11 +456,13 @@ arrow vectors using the same camera projection.
 
 The default `render: "tube"` sends each 3D finger chain and thicker metacarpal
 paths through Premetadated's tube renderer, then adds an oblate ellipsoid for
-the palm. The solids currently overlap with visible seams; a future Larnt-level
-union can remove those boundaries. Use `render: "skeleton"` to inspect the
-projected landmark centerlines. Sparse light-directed hatching distinguishes
-phalanges and depth without stippling; set `shading: false` for outlines only.
-Both modes use the same gesture, landmarks, handedness, and camera.
+the palm. Each phalanx tapers toward the fingertip and uses hemispherical caps;
+small spherical joint volumes give the knuckles a restrained bump. The solids
+currently overlap with visible seams; a future Larnt-level union can remove
+those boundaries. Use `render: "skeleton"` to inspect the projected landmark
+centerlines. Sparse light-directed hatching distinguishes phalanges and depth
+without stippling; set `shading: false` for outlines only. Both modes use the
+same gesture, landmarks, handedness, and camera.
 
 #grid(
   columns: (1fr, 1fr),

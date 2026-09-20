@@ -178,11 +178,12 @@ Built-ins are `open-palm`, `fist`, `pointing`, `peace`, `thumbs-up`, `pinch`
 orientation. `hand-angles(...)` exposes constrained joint angles;
 `hand-joints(...)` returns all 21 landmarks; and `vary-hand(...)` creates
 deterministic correlated variation. The default `render: "tube"` passes the 3D
-chains through Premetadated's hidden-line renderer as finger tubes, thicker
-metacarpal tubes, and an oblate palm ellipsoid. Use `render: "skeleton"` to
-inspect projected landmark centerlines. The solids retain seams until union is
-available at the Larnt level. Sparse line hatching adds depth without the cost
-of stippling; set `shading: false` for outlines only. See
+chains through Premetadated's hidden-line renderer as tapered, round-ended
+finger tubes with subtle knuckle volumes, thicker metacarpal tubes, and an
+oblate palm ellipsoid. Use `render: "skeleton"` to inspect projected landmark
+centerlines. The solids retain seams until union is available at the Larnt
+level. Sparse line hatching adds depth without the cost of stippling; set
+`shading: false` for outlines only. See
 `examples/hand-tubes.typ` for a side-by-side comparison.
 
 ![V hand as projected skeleton and volumetric tubes](assets/previews/hand-tubes.png)
