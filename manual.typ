@@ -130,9 +130,40 @@ point is a 3D tuple.
 == Built-in poses
 
 The package includes standing, sitting, cross-legged sitting, thinking,
-walking, running, downward dog, child's pose, warrior two, tree pose, squatting,
-push-up, pull-up, and jumping with open legs. Their stable names are available
-as keys in `poses`; see `assets/previews/poses.png` for the visual index.
+walking, running, downward dog, child's pose, warrior one, warrior two, tree
+pose, squatting, push-up, pull-up, walking on hands, jumping on one foot, and
+jumping with open legs. Their stable names are available as keys in `poses`;
+see `assets/previews/poses.png` for the visual index.
+
+== Controlled variation
+
+`vary-pose(pose, variation:, seed:)` adds small deterministic offsets to the
+canonical 3D bone directions. It accepts either a built-in pose name or a pose
+dictionary and returns a new dictionary suitable for `human`, `joints`, or
+additional editing.
+
+```typ
+#let people = range(5).map(seed =>
+  vary-pose("walking", variation: 0.09, seed: seed)
+)
+
+#for person in people {
+  human(pose: person, camera: profile-camera)
+}
+```
+
+The same operation is available directly on `human`:
+
+```typ
+#human(pose: "walking", variation: 0.09, seed: 3)
+```
+
+The integer seed makes output reproducible. Equal inputs produce identical
+figures, while different seeds redistribute each limb slightly. Variation is
+bounded to `0..0.35`; `0` returns the canonical pose, and `0.04..0.12` usually
+gives useful scene diversity without changing the gesture. Torso and body-side
+axes receive a smaller perturbation than limbs. All directions are normalized
+after perturbation, so bone lengths remain fixed.
 
 = Camera and projection
 
@@ -224,7 +255,7 @@ final drawing size and pen dimensions.
 
 Every bone and the head outline are rendered by
 `premetadated.stroke.nib-stroke`. The default tangent-following nib has a broad
-axis of `0.038`, a fine axis of `0.011`, and an offset of `24deg`. Nib dimensions
+axis of `0.050`, a fine axis of `0.015`, and an offset of `24deg`. Nib dimensions
 scale with the figure.
 
 Pass any Premetadated pen dictionary to override it:
@@ -274,11 +305,17 @@ ranges are model domains rather than universal physiological safety limits.
 
 == `human`
 
-`human(pose:, scale:, stroke:, pen:, limits:, camera:)` renders one figure.
+`human(pose:, variation:, seed:, scale:, stroke:, pen:, limits:, camera:)`
+renders one figure.
 `pose` accepts a built-in name or complete 3D pose dictionary. `stroke` is the
 ink color. `pen` accepts a Premetadated pen; `none` selects the package default.
 `limits` optionally clamps imported OpenSim leg angles. `camera` controls the
 projection.
+
+== `vary-pose`
+
+`vary-pose(pose, variation:, seed:)` returns a reproducibly perturbed 3D pose.
+The accepted variation range is `0..0.35` and the seed must be an integer.
 
 == `camera`
 

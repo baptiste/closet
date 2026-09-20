@@ -120,6 +120,18 @@
     right-upper-leg: (-0.7, 0.0, -0.72),
     right-lower-leg: (-0.7, 0.0, -0.72),
   ),
+  yoga-warrior-one: _pose(
+    torso: (0.08, 0.0, 1.0),
+    side: (0.0, 1.0, 0.0),
+    left-upper-arm: (0.28, 0.08, 0.96),
+    left-lower-arm: (0.2, 0.04, 0.98),
+    right-upper-arm: (0.28, -0.08, 0.96),
+    right-lower-arm: (0.2, -0.04, 0.98),
+    left-upper-leg: (0.75, 0.05, -0.66),
+    left-lower-leg: (0.0, 0.02, -1.0),
+    right-upper-leg: (-0.62, -0.05, -0.78),
+    right-lower-leg: (-0.62, -0.03, -0.78),
+  ),
   yoga-tree: _pose(
     left-upper-arm: (0.55, 0.0, 0.84),
     left-lower-arm: (-0.55, 0.0, 0.84),
@@ -163,6 +175,29 @@
     right-upper-leg: (-0.2, 0.0, -0.98),
     right-lower-leg: (0.2, 0.0, -0.98),
   ),
+  walking-on-hands: _pose(
+    torso: (0.12, 0.0, -0.99),
+    side: (0.0, 1.0, 0.0),
+    left-upper-arm: (0.22, 0.05, -0.98),
+    left-lower-arm: (-0.08, 0.02, -1.0),
+    right-upper-arm: (-0.18, -0.05, -0.98),
+    right-lower-arm: (0.12, -0.02, -0.99),
+    left-upper-leg: (-0.42, 0.05, 0.91),
+    left-lower-leg: (-0.72, 0.03, 0.69),
+    right-upper-leg: (0.52, -0.05, 0.85),
+    right-lower-leg: (0.82, -0.03, 0.57),
+  ),
+  jumping-one-foot: _pose(
+    torso: (0.08, 0.0, 1.0),
+    left-upper-arm: (0.65, 0.0, 0.76),
+    left-lower-arm: (0.35, 0.0, 0.94),
+    right-upper-arm: (-0.55, 0.0, 0.84),
+    right-lower-arm: (-0.25, 0.0, 0.97),
+    left-upper-leg: (0.08, 0.0, -1.0),
+    left-lower-leg: (-0.05, 0.0, -1.0),
+    right-upper-leg: (-0.78, -0.08, -0.62),
+    right-lower-leg: (0.75, -0.04, 0.66),
+  ),
   jumping-open-legs: _pose(
     left-upper-arm: (0.55, 0.0, 0.84),
     left-lower-arm: (0.55, 0.0, 0.84),
@@ -190,6 +225,43 @@
   _mul(vector, 1 / length)
 }
 #let _step(origin, length, direction) = _add(origin, _mul(_unit(direction), length))
+
+#let _resolve-pose(pose) = {
+  if type(pose) == str {
+    assert(pose in poses, message: "unknown closet pose: " + pose)
+    poses.at(pose)
+  } else {
+    assert(type(pose) == dictionary, message: "pose must be a name or dictionary")
+    pose
+  }
+}
+
+#let _noise(seed, index) = calc.sin((seed * 91.7 + index * 47.3 + 13.1) * 1rad)
+
+#let vary-pose(pose, variation: 0.08, seed: 0) = {
+  assert(type(seed) == int, message: "pose variation seed must be an integer")
+  assert(variation >= 0 and variation <= 0.35, message: "pose variation must be between 0 and 0.35")
+  let varied = _resolve-pose(pose)
+  if variation == 0 {
+    return varied
+  }
+  let names = (
+    "torso", "side",
+    "left-upper-arm", "left-lower-arm", "right-upper-arm", "right-lower-arm",
+    "left-upper-leg", "left-lower-leg", "right-upper-leg", "right-lower-leg",
+  )
+  for (index, name) in names.enumerate() {
+    let direction = varied.at(name)
+    let amount = if name == "torso" or name == "side" { variation * 0.45 } else { variation }
+    let offset = (
+      _noise(seed, index * 3),
+      _noise(seed, index * 3 + 1),
+      _noise(seed, index * 3 + 2),
+    )
+    varied.insert(name, _unit(_add(direction, _mul(offset, amount))))
+  }
+  varied
+}
 
 #let _chain(origin, lengths, directions) = {
   let points = (origin,)
@@ -289,22 +361,19 @@
 
 #let human(
   pose: "standing",
+  variation: 0.0,
+  seed: 0,
   scale: 1.0,
   stroke: black,
   pen: none,
   limits: none,
   camera: default-camera,
 ) = {
-  let selected = if type(pose) == str {
-    assert(pose in poses, message: "unknown skeleton pose: " + pose)
-    poses.at(pose)
-  } else {
-    assert(type(pose) == dictionary, message: "pose must be a name or dictionary")
-    pose
-  }
+  let selected = _resolve-pose(pose)
   if limits != none {
     selected = constrain-pose(selected, limits)
   }
+  selected = vary-pose(selected, variation: variation, seed: seed)
   assert(scale > 0, message: "skeleton scale must be positive")
   let model = joints(selected)
   let transform(point) = {
@@ -315,7 +384,7 @@
     (
       mode: "calligraphic",
       offset: 24deg,
-      samples: ((arclength: 0, a: 0.038 * scale, b: 0.011 * scale),),
+      samples: ((arclength: 0, a: 0.050 * scale, b: 0.015 * scale),),
     )
   } else {
     pen

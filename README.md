@@ -43,11 +43,14 @@ On macOS, `{data-dir}` is `~/Library/Application Support`.
 - `running`
 - `yoga-downward-dog`
 - `yoga-child-pose`
+- `yoga-warrior-one`
 - `yoga-warrior-two`
 - `yoga-tree`
 - `squatting`
 - `push-up`
 - `pull-up`
+- `walking-on-hands`
+- `jumping-one-foot`
 - `jumping-open-legs`
 
 Compile the complete gallery with:
@@ -78,6 +81,8 @@ the projection model, viewpoint guidance, and complete API reference.
 ```typ
 #human(
   pose: "running", // built-in name or a 3D pose dictionary
+  variation: 0.0,
+  seed: 0,
   scale: 1.0,
   stroke: black,
   pen: none, // Premetadated pen; none uses the calligraphic default
@@ -85,6 +90,31 @@ the projection model, viewpoint guidance, and complete API reference.
   camera: default-camera,
 )
 ```
+
+## Pose variations
+
+Use `variation` and an integer `seed` to create related but non-identical
+figures. Seeds are deterministic, making document builds reproducible:
+
+![Five deterministic variations of the walking pose](assets/previews/variations.png)
+
+```typ
+#for seed in range(5) {
+  human(pose: "walking", variation: 0.09, seed: seed)
+}
+```
+
+For reuse or further editing, generate the pose dictionary first:
+
+```typ
+#let walker = vary-pose("walking", variation: 0.09, seed: 3)
+#human(pose: walker)
+```
+
+`variation` ranges from `0` to `0.35`; values around `0.04` to `0.12` are best
+for natural scene variation. The function perturbs normalized 3D directions,
+so anatomical segment lengths remain unchanged. The complete strip is generated
+by `examples/variations.typ`.
 
 Pose vectors use `(x, y, z)`, where `x` is image-right in a front-facing pose,
 `y` is depth, and `z` is up. Each upper and lower limb segment has an independent
@@ -96,8 +126,8 @@ camera. `front-camera`, `profile-camera`, and `three-quarter-camera` are supplie
 as convenient starting points. `project(point, camera:)` exposes the same 3D to
 2D projection used by `human`.
 
-The default pen is tangent-following calligraphy with a broad axis of `0.038`
-and fine axis of `0.011`, scaled with the figure. Pass any pen accepted by
+The default pen is tangent-following calligraphy with a broad axis of `0.050`
+and fine axis of `0.015`, scaled with the figure. Pass any pen accepted by
 `premetadated.stroke.nib-stroke` to `human(pen:)` to control its nib.
 
 `pose-from-degrees(base, values)` converts the sagittal numeric angles produced

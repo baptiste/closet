@@ -11,11 +11,14 @@
   ("running", "running"),
   ("yoga-downward-dog", "downward dog"),
   ("yoga-child-pose", "child's pose"),
+  ("yoga-warrior-one", "warrior one"),
   ("yoga-warrior-two", "warrior two"),
   ("yoga-tree", "tree pose"),
   ("squatting", "squatting"),
   ("push-up", "push-up"),
   ("pull-up", "pull-up"),
+  ("walking-on-hands", "walking on hands"),
+  ("jumping-one-foot", "jumping on one foot"),
   ("jumping-open-legs", "jumping, open legs"),
 )
 
@@ -26,7 +29,9 @@
   "running",
   "yoga-downward-dog",
   "yoga-child-pose",
+  "yoga-warrior-one",
   "push-up",
+  "walking-on-hands",
 )
 
 #let tile(name, label) = box(width: 100%, height: 39mm)[
