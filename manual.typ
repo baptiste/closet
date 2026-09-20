@@ -365,8 +365,92 @@ then uses the same camera projection and Premetadated pen as `human`.
 ```
 
 The built-in names are `open-palm`, `fist`, `pointing`, `peace`, `thumbs-up`,
-`pinch`, `three-fingers`, `rock`, and `beckoning`; `ok` aliases `pinch`. Set
-`handedness: "left"` to mirror the complete 3D skeleton before wrist rotation.
+`pinch`, `three-fingers`, `rock`, `beckoning`, and `right-hand-rule`; `ok`
+aliases `pinch`. Handedness is anatomical, not screen-relative. With the palm
+facing the viewer, a right hand's thumb appears on the viewer's right; from the
+back it appears on the left. Set `handedness: "left"` to reflect the complete
+3D skeleton before wrist rotation.
+
+== Beckoning from three directions
+
+The beckoning gesture curls the index finger partway while the remaining
+fingers stay more tightly flexed. These are three projections of the same 3D
+gesture. Its finger shading is reduced to one short hatch per phalanx so the
+joint bends remain clear.
+
+#let beckoning-views = (
+  ([Front], closet.camera(
+    eye: (0.0, -7.0, 2.5),
+    target: (0.0, 0.0, 0.65),
+    focal-length: 6.5,
+  )),
+  ([Three-quarter], closet.camera(
+    eye: (4.5, -6.0, 3.0),
+    target: (0.0, 0.0, 0.65),
+    focal-length: 6.5,
+  )),
+  ([Side], closet.camera(
+    eye: (7.0, 0.0, 2.5),
+    target: (0.0, 0.0, 0.65),
+    focal-length: 6.5,
+  )),
+)
+#grid(
+  columns: (1fr,) * 3,
+  gutter: 8mm,
+  ..beckoning-views.map(view => sample-panel(
+    view.at(0),
+    closet.hand(
+      gesture: "beckoning",
+      finger-hatch-count: 1,
+      scale: 1.65,
+      camera: view.at(1),
+    ),
+    height: 34mm,
+  )),
+)
+
+```typ
+#hand(
+  gesture: "beckoning",
+  finger-hatch-count: 1,
+  camera: side-view,
+)
+```
+
+== Electromagnetic right-hand rule
+
+`right-hand-rule` forms a right-handed three-finger triad. The extended index
+finger is $y$, the naturally bent middle finger is $z$, and the thumb is $x$.
+The three arrows follow the corresponding 3D finger directions rather than
+their apparent directions on the page. Set `axes: true` to superpose labeled
+arrow vectors using the same camera projection.
+
+#align(center)[
+  #box(width: 78mm, height: 56mm)[
+    #align(center + horizon, closet.hand(
+      gesture: "right-hand-rule",
+      axes: true,
+      finger-hatch-count: 1,
+      scale: 2.0,
+      camera: closet.camera(
+        eye: (3.6, -7.0, 3.0),
+        target: (0.0, 0.0, 0.65),
+        focal-length: 6.5,
+      ),
+    ))
+  ]
+  #caption([Right hand: thumb $x$, index $y$, middle $z$])
+]
+
+```typ
+#hand(
+  gesture: "right-hand-rule",
+  axes: true,
+  finger-hatch-count: 1,
+  camera: view,
+)
+```
 
 == Volumetric tube rendering
 
@@ -409,9 +493,11 @@ Both modes use the same gesture, landmarks, handedness, and camera.
 
 `tube-radius` is measured in the hand model's 3D units. `tube-sides` controls
 cross-section smoothness and must be at least six. `shading` enables sparse
-line hatching on the tubes and palm; it never uses stippling. The tube renderer
-derives its field of view from Closet's camera focal length, so changing `eye`,
-`target`, `up`, or `focal-length` works consistently in both modes.
+line hatching on the tubes and palm; it never uses stippling.
+`finger-hatch-count` controls marks per phalanx and defaults to `2`; use `1`
+for sparse shading or `0` for unshaded fingers. The tube renderer derives its
+field of view from Closet's camera focal length, so changing `eye`, `target`,
+`up`, or `focal-length` works consistently in both modes.
 
 == Defining a hand pose
 
@@ -702,7 +788,9 @@ ranges are model domains rather than universal physiological safety limits.
 == `hand`, `hand-pose`, and `hand-gestures`
 
 `hand(gesture:, variation:, seed:, handedness:, render:, tube-radius:,
-tube-sides:, shading:, scale:, stroke:, pen:, camera:)` renders a procedural hand.
+tube-sides:, shading:, finger-hatch-count:, axes:, scale:, stroke:, pen:,
+camera:)` renders a procedural hand. `axes: true` overlays the coordinate triad
+for `right-hand-rule`.
 `render` accepts `"skeleton"` or `"tube"`. `hand-pose(...)` creates compact
 finger controls, and `hand-gestures` contains the canonical dictionaries.
 

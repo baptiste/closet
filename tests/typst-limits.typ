@@ -1,4 +1,4 @@
-#import "../lib.typ": bend-torso, constrain-pose, hand-angles, hand-gestures, hand-joint-limits, hand-joints, hand-pose, hand-topology, joints, pose, pose-from-degrees, poses, project, raise-arms, spread-legs, stretch-arms, tilt-head, vary-hand, vary-pose, walk-legs, wave-arms
+#import "../lib.typ": bend-torso, constrain-pose, hand-angles, hand-gestures, hand-joint-limits, hand-joints, hand-pose, hand-topology, joints, pose, pose-from-degrees, poses, project, raise-arms, right-hand-rule-axes, spread-legs, stretch-arms, tilt-head, vary-hand, vary-pose, walk-legs, wave-arms
 
 #let limits = json("../data/gait2354.json").limits
 #let outside = poses.running
@@ -49,6 +49,12 @@
 	let length = calc.sqrt(vector.fold(0.0, (sum, value) => sum + value * value))
 	vector.map(value => value / length)
 }
+#let dot(a, b) = a.at(0) * b.at(0) + a.at(1) * b.at(1) + a.at(2) * b.at(2)
+#let cross(a, b) = (
+	a.at(1) * b.at(2) - a.at(2) * b.at(1),
+	a.at(2) * b.at(0) - a.at(0) * b.at(2),
+	a.at(0) * b.at(1) - a.at(1) * b.at(0),
+)
 #let sitting = joints(poses.sitting)
 #assert(sitting.left-leg.at(1).at(0) > 0.8)
 #assert(sitting.right-leg.at(1).at(0) > 0.8)
@@ -121,7 +127,7 @@
 
 #let requested-hand-gestures = (
 	"open-palm", "fist", "pointing", "peace", "thumbs-up",
-	"pinch", "ok", "three-fingers", "rock", "beckoning",
+	"pinch", "ok", "three-fingers", "rock", "beckoning", "right-hand-rule",
 )
 #for name in requested-hand-gestures {
 	assert(name in hand-gestures, message: "missing canonical hand gesture: " + name)
@@ -145,6 +151,53 @@
 #let left-open-hand = hand-joints("open-palm", handedness: "left")
 #assert(calc.abs(left-open-hand.index-tip.at(0) + open-hand.index-tip.at(0)) < 0.00001)
 #assert.eq(left-open-hand.index-tip.at(1), open-hand.index-tip.at(1))
+#let right-palm-normal = unit(cross(
+	(
+		open-hand.index-mcp.at(0) - open-hand.wrist.at(0),
+		open-hand.index-mcp.at(1) - open-hand.wrist.at(1),
+		open-hand.index-mcp.at(2) - open-hand.wrist.at(2),
+	),
+	(
+		open-hand.thumb-cmc.at(0) - open-hand.wrist.at(0),
+		open-hand.thumb-cmc.at(1) - open-hand.wrist.at(1),
+		open-hand.thumb-cmc.at(2) - open-hand.wrist.at(2),
+	),
+))
+#let left-palm-normal = unit(cross(
+	(
+		left-open-hand.index-mcp.at(0) - left-open-hand.wrist.at(0),
+		left-open-hand.index-mcp.at(1) - left-open-hand.wrist.at(1),
+		left-open-hand.index-mcp.at(2) - left-open-hand.wrist.at(2),
+	),
+	(
+		left-open-hand.thumb-cmc.at(0) - left-open-hand.wrist.at(0),
+		left-open-hand.thumb-cmc.at(1) - left-open-hand.wrist.at(1),
+		left-open-hand.thumb-cmc.at(2) - left-open-hand.wrist.at(2),
+	),
+))
+#assert(right-palm-normal.at(1) > 0)
+#assert(left-palm-normal.at(1) < 0)
+#let right-rule = right-hand-rule-axes()
+#assert(dot(right-rule.z, unit(cross(right-rule.x, right-rule.y))) > 0.45)
+#let rule-hand = hand-joints("right-hand-rule")
+#let thumb-direction = unit((
+	rule-hand.thumb-tip.at(0) - rule-hand.thumb-cmc.at(0),
+	rule-hand.thumb-tip.at(1) - rule-hand.thumb-cmc.at(1),
+	rule-hand.thumb-tip.at(2) - rule-hand.thumb-cmc.at(2),
+))
+#let index-direction = unit((
+	rule-hand.index-tip.at(0) - rule-hand.index-mcp.at(0),
+	rule-hand.index-tip.at(1) - rule-hand.index-mcp.at(1),
+	rule-hand.index-tip.at(2) - rule-hand.index-mcp.at(2),
+))
+#let middle-direction = unit((
+	rule-hand.middle-tip.at(0) - rule-hand.middle-mcp.at(0),
+	rule-hand.middle-tip.at(1) - rule-hand.middle-mcp.at(1),
+	rule-hand.middle-tip.at(2) - rule-hand.middle-mcp.at(2),
+))
+#assert(dot(right-rule.x, thumb-direction) > 0.999)
+#assert(dot(right-rule.y, index-direction) > 0.999)
+#assert(dot(right-rule.z, middle-direction) > 0.999)
 #let hand-variation-a = vary-hand("open-palm", variation: 0.08, seed: 11)
 #let hand-variation-b = vary-hand("open-palm", variation: 0.08, seed: 12)
 #assert.eq(hand-variation-a, vary-hand("open-palm", variation: 0.08, seed: 11))

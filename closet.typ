@@ -648,6 +648,14 @@
   spread: 0.35,
   wrist: (pitch: -6deg, yaw: 0deg, roll: 0deg),
 )
+#let _right-hand-rule-hand = hand-pose(
+  thumb: (curl: 0.02, spread: 1.0, opposition: 0.0),
+  index: (curl: 0.02, spread: -0.08),
+  middle: (curl: 0.35, spread: 0.08),
+  ring: (curl: 0.96),
+  pinky: (curl: 0.92),
+  spread: 0.35,
+)
 
 #let hand-gestures = (
   open-palm: _open-hand,
@@ -660,6 +668,7 @@
   three-fingers: _three-fingers-hand,
   rock: _rock-hand,
   beckoning: _beckoning-hand,
+  right-hand-rule: _right-hand-rule-hand,
 )
 
 #let hand-topology = (
@@ -760,7 +769,7 @@
 )
 
 #let _orient-hand-point(point, wrist, handedness) = {
-  let oriented = if handedness == "left" { (-point.at(0), point.at(1), point.at(2)) } else { point }
+  let oriented = if handedness == "right" { (-point.at(0), point.at(1), point.at(2)) } else { point }
   oriented = _rotate-x(oriented, wrist.pitch)
   oriented = _rotate-y(oriented, wrist.yaw)
   _rotate-z(oriented, wrist.roll)
@@ -831,6 +840,20 @@
   local.map(point => _orient-hand-point(point, angles.wrist, handedness))
 }
 
+#let right-hand-rule-axes(handedness: "right") = {
+  let landmarks = hand-joints("right-hand-rule", handedness: handedness)
+  let origin = _add(landmarks.wrist, _mul(_sub(landmarks.middle-mcp, landmarks.wrist), 0.5))
+  let x-direction = _unit(_sub(landmarks.thumb-tip, landmarks.thumb-cmc))
+  let y-direction = _unit(_sub(landmarks.index-tip, landmarks.index-mcp))
+  let z-direction = _unit(_sub(landmarks.middle-tip, landmarks.middle-mcp))
+  (
+    origin: origin,
+    x: x-direction,
+    y: y-direction,
+    z: z-direction,
+  )
+}
+
 #let hand(
   gesture: "open-palm",
   variation: 0.0,
@@ -840,6 +863,8 @@
   tube-radius: 0.045,
   tube-sides: 10,
   shading: true,
+  finger-hatch-count: 2,
+  axes: false,
   scale: 2.0,
   stroke: black,
   pen: none,
@@ -850,6 +875,10 @@
   assert(tube-radius > 0, message: "hand tube radius must be positive")
   assert(type(tube-sides) == int and tube-sides >= 6, message: "hand tube sides must be an integer of at least 6")
   assert(type(shading) == bool, message: "hand shading must be boolean")
+  assert(type(finger-hatch-count) == int and finger-hatch-count >= 0, message: "finger hatch count must be a non-negative integer")
+  assert(type(axes) == bool, message: "hand axes must be boolean")
+  assert(not axes or gesture == "right-hand-rule", message: "hand axes require the right-hand-rule gesture")
+  assert(not axes or handedness == "right", message: "right-hand-rule axes require handedness right")
   let landmarks = hand-joints(
     gesture,
     variation: variation,
@@ -877,8 +906,8 @@
       pen
     }
     let light = (-1.0, -0.5, 1.0)
-    let finger-pattern = if shading {
-      (geometry.texture.lit-hatch)(light: light, count: 2, length: 0.045, crosshatch: 0.0)
+    let finger-pattern = if shading and finger-hatch-count > 0 {
+      (geometry.texture.lit-hatch)(light: light, count: finger-hatch-count, length: 0.045, crosshatch: 0.0)
     } else {
       (geometry.texture.outline)()
     }
@@ -923,6 +952,38 @@
         epsilon: 0.002,
         fill: stroke,
       )
+      if axes {
+        let basis = right-hand-rule-axes(handedness: handedness)
+        let axis-data = (
+          (name: "x", direction: basis.x, color: rgb("b33a3a")),
+          (name: "y", direction: basis.y, color: rgb("2f6f48")),
+          (name: "z", direction: basis.z, color: rgb("315f8a")),
+        )
+        for axis in axis-data {
+          let tip = _add(basis.origin, _mul(axis.direction, 1.25))
+          let cone-base = _add(basis.origin, _mul(axis.direction, 1.08))
+          geometry.render(
+            geometry.cylinder(0.014, basis.origin, cone-base),
+            geometry.cone(0.055, cone-base, tip),
+            eye: camera.eye,
+            center: camera.target,
+            up: camera.up,
+            width: 4.2,
+            height: viewport-height,
+            fovy: fovy,
+            step: 0.015,
+            pen: (0.009 * scale, 0.0028 * scale, 24deg),
+            epsilon: 0.002,
+            fill: axis.color,
+          )
+          let label-point = transform(_add(tip, _mul(axis.direction, 0.08)))
+          cetz.draw.content(
+            (label-point.at(0) + 2.1, label-point.at(1) + viewport-height / 2),
+            text(size: 8pt, weight: "bold", fill: axis.color, axis.name),
+            padding: 0pt,
+          )
+        }
+      }
     })
   }
   cetz.canvas(length: 1cm, {

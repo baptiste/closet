@@ -172,7 +172,8 @@ drawings, and use the same camera and calligraphic renderer as full figures:
 ```
 
 Built-ins are `open-palm`, `fist`, `pointing`, `peace`, `thumbs-up`, `pinch`
-(`ok` is an alias), `three-fingers`, `rock`, and `beckoning`. Use
+(`ok` is an alias), `three-fingers`, `rock`, `beckoning`, and
+`right-hand-rule`. Use
 `hand-pose(...)` for custom finger curl, spread, thumb opposition, and wrist
 orientation. `hand-angles(...)` exposes constrained joint angles;
 `hand-joints(...)` returns all 21 landmarks; and `vary-hand(...)` creates
@@ -185,6 +186,12 @@ of stippling; set `shading: false` for outlines only. See
 `examples/hand-tubes.typ` for a side-by-side comparison.
 
 ![V hand as projected skeleton and volumetric tubes](assets/previews/hand-tubes.png)
+
+For the electromagnetic three-finger rule, `axes: true` overlays a right-handed
+triad with thumb $x$, index $y$, and middle $z$. Handedness is
+anatomical: in a palm-facing view, the right thumb appears on the viewer's right.
+
+![Right-hand coordinate rule](assets/previews/right-hand-rule.png)
 
 Pose vectors use `(x, y, z)`, where `x` is image-right in a front-facing pose,
 `y` is depth, and `z` is up. Each upper and lower limb segment has an independent
