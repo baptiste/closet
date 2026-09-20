@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSimDocument Version="40000">
+  <Model name="3DGaitModel2354">
+    <JointSet name="jointset">
+      <objects>
+        <CustomJoint name="hip_r">
+          <coordinates>
+            <Coordinate name="hip_flexion_r">
+              <default_value>0</default_value>
+              <range>-2.0943951 2.0943951</range>
+              <clamped>false</clamped>
+            </Coordinate>
+          </coordinates>
+        </CustomJoint>
+        <CustomJoint name="knee_r">
+          <coordinates>
+            <Coordinate name="knee_angle_r">
+              <default_value>0</default_value>
+              <range>-2.0943951 0.17453293</range>
+              <clamped>false</clamped>
+            </Coordinate>
+          </coordinates>
+        </CustomJoint>
+        <CustomJoint name="hip_l">
+          <coordinates>
+            <Coordinate name="hip_flexion_l">
+              <default_value>0</default_value>
+              <range>-2.0943951 2.0943951</range>
+              <clamped>false</clamped>
+            </Coordinate>
+          </coordinates>
+        </CustomJoint>
+        <CustomJoint name="knee_l">
+          <coordinates>
+            <Coordinate name="knee_angle_l">
+              <default_value>0</default_value>
+              <range>-2.0943951 0.17453293</range>
+              <clamped>false</clamped>
+            </Coordinate>
+          </coordinates>
+        </CustomJoint>
+      </objects>
+    </JointSet>
+  </Model>
+</OpenSimDocument>

@@ -1,0 +1,12 @@
+[package]
+name = "closet"
+version = "0.1.0"
+entrypoint = "lib.typ"
+compiler = "0.13.0"
+description = "Calligraphic 3D stick figures with perspective cameras and canonical poses"
+authors = ["Baptiste Auguie"]
+license = "MPL-2.0"
+repository = "https://github.com/baptiste/closet"
+keywords = ["human", "pose", "skeleton", "3d", "illustration"]
+categories = ["visualization"]
+exclude = ["tools", "tests", "*.pdf", "*.png"]

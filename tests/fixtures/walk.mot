@@ -1,0 +1,10 @@
+Coordinates
+version=1
+nRows=3
+nColumns=5
+inDegrees=yes
+endheader
+time hip_flexion_r knee_angle_r hip_flexion_l knee_angle_l
+0.0 20 -50 -10 -5
+0.5 0 -10 5 -20
+1.0 -15 -8 25 -55

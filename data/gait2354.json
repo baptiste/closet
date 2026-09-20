@@ -1,0 +1,71 @@
+{
+  "model": "3DGaitModel2354",
+  "source": "https://raw.githubusercontent.com/opensim-org/opensim-models/d9b05d470b1a481c222372c85b75772faf8f7792/Models/Gait2354_Simbody/gait2354_simbody.osim",
+  "motion_source": "https://raw.githubusercontent.com/opensim-org/opensim-models/d9b05d470b1a481c222372c85b75772faf8f7792/Pipelines/Gait2354_Simbody/subject01_walk1_ik.mot",
+  "units": "degrees",
+  "note": "OpenSim coordinate ranges are model domains. clamped_in_opensim records whether the source model enforces each range.",
+  "limits": {
+    "left-knee": {
+      "minimum": -120.0,
+      "maximum": 10.0,
+      "source_coordinate": "knee_angle_l",
+      "source_joint": "knee_l",
+      "clamped_in_opensim": false
+    },
+    "left-leg": {
+      "minimum": -300.0,
+      "maximum": -60.0,
+      "source_coordinate": "hip_flexion_l",
+      "source_joint": "hip_l",
+      "clamped_in_opensim": false
+    },
+    "right-knee": {
+      "minimum": -120.0,
+      "maximum": 10.0,
+      "source_coordinate": "knee_angle_r",
+      "source_joint": "knee_r",
+      "clamped_in_opensim": false
+    },
+    "right-leg": {
+      "minimum": -300.0,
+      "maximum": -60.0,
+      "source_coordinate": "hip_flexion_r",
+      "source_joint": "hip_r",
+      "clamped_in_opensim": false
+    }
+  },
+  "samples": [
+    {
+      "label": "right leg forward",
+      "time": 0.68333333,
+      "source_coordinates": {
+        "hip_flexion_l": -21.34831981,
+        "hip_flexion_r": 21.63514134,
+        "knee_angle_l": -12.61379624,
+        "knee_angle_r": -13.34790172
+      },
+      "pose_degrees": {
+        "left-leg": -201.34832,
+        "right-leg": -158.364859,
+        "left-knee": -12.613796,
+        "right-knee": -13.347902
+      }
+    },
+    {
+      "label": "left leg forward",
+      "time": 1.3,
+      "source_coordinates": {
+        "hip_flexion_l": 20.10802345,
+        "hip_flexion_r": -21.14164011,
+        "knee_angle_l": -11.25910291,
+        "knee_angle_r": -15.50699154
+      },
+      "pose_degrees": {
+        "left-leg": -159.891977,
+        "right-leg": -201.14164,
+        "left-knee": -11.259103,
+        "right-knee": -15.506992
+      }
+    }
+  ]
+}
