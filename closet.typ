@@ -6,6 +6,7 @@
 #let _pose(
   torso: (0.0, 0.0, 1.0),
   side: (1.0, 0.0, 0.0),
+  head: none,
   left-upper-arm: (0.1, 0.0, -1.0),
   left-lower-arm: (0.0, 0.0, -1.0),
   right-upper-arm: (-0.1, 0.0, -1.0),
@@ -17,6 +18,7 @@
 ) = (
   torso: torso,
   side: side,
+  head: head,
   left-upper-arm: left-upper-arm,
   left-lower-arm: left-lower-arm,
   right-upper-arm: right-upper-arm,
@@ -26,6 +28,8 @@
   right-upper-leg: right-upper-leg,
   right-lower-leg: right-lower-leg,
 )
+
+#let pose = _pose
 
 #let poses = (
   standing: _pose(),
@@ -263,6 +267,111 @@
   varied
 }
 
+#let _gesture-amount(amount, name, signed: false) = {
+  let valid = if signed { calc.abs(amount) <= 1 } else { amount >= 0 and amount <= 1 }
+  assert(valid, message: name + " amount must be " + if signed { "between -1 and 1" } else { "between 0 and 1" })
+  amount
+}
+
+#let _gesture-sides(side) = {
+  assert(side in ("left", "right", "both"), message: "gesture side must be left, right, or both")
+  if side == "both" { ("left", "right") } else { (side,) }
+}
+
+#let _blend-direction(from, to, amount) = _unit(_add(_mul(_unit(from), 1 - amount), _mul(_unit(to), amount)))
+
+#let tilt-head(pose, amount: 0.25) = {
+  let amount = _gesture-amount(amount, "tilt-head", signed: true)
+  let modified = _resolve-pose(pose)
+  modified.insert("head", _unit(_add(_unit(modified.torso), _mul(_unit(modified.side), amount))))
+  modified
+}
+
+#let bend-torso(pose, amount: 0.2) = {
+  let amount = _gesture-amount(amount, "bend-torso", signed: true)
+  let modified = _resolve-pose(pose)
+  let torso = _unit(modified.torso)
+  let forward = _unit(_cross(_unit(modified.side), torso))
+  modified.insert("torso", _unit(_add(torso, _mul(forward, amount))))
+  modified
+}
+
+#let raise-arms(pose, amount: 0.75, side: "both") = {
+  let amount = _gesture-amount(amount, "raise-arms")
+  let modified = _resolve-pose(pose)
+  let torso = _unit(modified.torso)
+  let lateral = _unit(modified.side)
+  for body-side in _gesture-sides(side) {
+    let sign = if body-side == "left" { 1 } else { -1 }
+    let target = _unit(_add(torso, _mul(lateral, sign * 0.18)))
+    for segment in ("upper-arm", "lower-arm") {
+      let name = body-side + "-" + segment
+      modified.insert(name, _blend-direction(modified.at(name), target, amount))
+    }
+  }
+  modified
+}
+
+#let stretch-arms(pose, amount: 0.8, side: "both") = {
+  let amount = _gesture-amount(amount, "stretch-arms")
+  let modified = _resolve-pose(pose)
+  for body-side in _gesture-sides(side) {
+    let upper = modified.at(body-side + "-upper-arm")
+    let lower-name = body-side + "-lower-arm"
+    modified.insert(lower-name, _blend-direction(modified.at(lower-name), upper, amount))
+  }
+  modified
+}
+
+#let spread-legs(pose, amount: 0.65) = {
+  let amount = _gesture-amount(amount, "spread-legs")
+  let modified = _resolve-pose(pose)
+  let torso = _unit(modified.torso)
+  let lateral = _unit(modified.side)
+  for body-side in ("left", "right") {
+    let sign = if body-side == "left" { 1 } else { -1 }
+    let target = _unit(_add(_mul(lateral, sign), _mul(torso, -0.8)))
+    for segment in ("upper-leg", "lower-leg") {
+      let name = body-side + "-" + segment
+      modified.insert(name, _blend-direction(modified.at(name), target, amount))
+    }
+  }
+  modified
+}
+
+#let walk-legs(pose, amount: 0.55) = {
+  let amount = _gesture-amount(amount, "walk-legs", signed: true)
+  let modified = _resolve-pose(pose)
+  let torso = _unit(modified.torso)
+  let forward = _unit(_cross(_unit(modified.side), torso))
+  for (body-side, sign) in (("left", 1), ("right", -1)) {
+    let upper-name = body-side + "-upper-leg"
+    let lower-name = body-side + "-lower-leg"
+    let upper-target = _unit(_add(_mul(torso, -1), _mul(forward, amount * sign)))
+    let lower-target = _unit(_add(_mul(torso, -1), _mul(forward, amount * sign * 0.2)))
+    modified.insert(upper-name, _blend-direction(modified.at(upper-name), upper-target, calc.abs(amount)))
+    modified.insert(lower-name, _blend-direction(modified.at(lower-name), lower-target, calc.abs(amount)))
+  }
+  modified
+}
+
+#let wave-arms(pose, amount: 0.8, side: "right") = {
+  let amount = _gesture-amount(amount, "wave-arms")
+  let modified = _resolve-pose(pose)
+  let torso = _unit(modified.torso)
+  let lateral = _unit(modified.side)
+  for body-side in _gesture-sides(side) {
+    let sign = if body-side == "left" { 1 } else { -1 }
+    let upper-target = _unit(_add(_mul(torso, 0.7), _mul(lateral, sign * 0.75)))
+    let lower-target = _unit(_add(_mul(torso, 0.95), _mul(lateral, sign * -0.3)))
+    let upper-name = body-side + "-upper-arm"
+    let lower-name = body-side + "-lower-arm"
+    modified.insert(upper-name, _blend-direction(modified.at(upper-name), upper-target, amount))
+    modified.insert(lower-name, _blend-direction(modified.at(lower-name), lower-target, amount))
+  }
+  modified
+}
+
 #let _chain(origin, lengths, directions) = {
   let points = (origin,)
   let point = origin
@@ -282,11 +391,12 @@
   let right-shoulder = _step(neck, -0.36, side)
   let left-hip = _step(pelvis, 0.18, side)
   let right-hip = _step(pelvis, -0.18, side)
+  let head-direction = if "head" in pose and pose.head != none { pose.head } else { torso }
 
   (
     pelvis: pelvis,
     neck: neck,
-    head: _step(neck, 0.42, torso),
+    head: _step(neck, 0.42, head-direction),
     left-arm: _chain(left-shoulder, (0.72, 0.62), (pose.left-upper-arm, pose.left-lower-arm)),
     right-arm: _chain(right-shoulder, (0.72, 0.62), (pose.right-upper-arm, pose.right-lower-arm)),
     left-leg: _chain(left-hip, (0.92, 0.88), (pose.left-upper-leg, pose.left-lower-leg)),

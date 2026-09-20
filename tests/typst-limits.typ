@@ -1,4 +1,4 @@
-#import "../lib.typ": constrain-pose, joints, pose-from-degrees, poses, project, vary-pose
+#import "../lib.typ": bend-torso, constrain-pose, joints, pose, pose-from-degrees, poses, project, raise-arms, spread-legs, stretch-arms, tilt-head, vary-pose, walk-legs, wave-arms
 
 #let limits = json("../data/gait2354.json").limits
 #let outside = poses.running
@@ -45,6 +45,10 @@
 	+ calc.pow(a.at(1) - b.at(1), 2)
 	+ calc.pow(a.at(2) - b.at(2), 2)
 )
+#let unit(vector) = {
+	let length = calc.sqrt(vector.fold(0.0, (sum, value) => sum + value * value))
+	vector.map(value => value / length)
+}
 #let sitting = joints(poses.sitting)
 #assert(sitting.left-leg.at(1).at(0) > 0.8)
 #assert(sitting.right-leg.at(1).at(0) > 0.8)
@@ -92,3 +96,25 @@
 #let varied-joints = joints(variation-a)
 #assert(calc.abs(distance(varied-joints.left-arm.at(0), varied-joints.left-arm.at(1)) - 0.72) < 0.00001)
 #assert(calc.abs(distance(varied-joints.left-arm.at(1), varied-joints.left-arm.at(2)) - 0.62) < 0.00001)
+
+#let manual-pose = pose(left-upper-arm: (1.0, 0.0, 0.0), right-upper-arm: (-1.0, 0.0, 0.0))
+#assert.eq(joints(manual-pose).pelvis.len(), 3)
+#let tilted = tilt-head("standing", amount: 0.3)
+#assert(tilted.head != none)
+#assert(tilted.head.at(0) > 0)
+#assert.eq(poses.standing.head, none)
+#let bent = bend-torso("standing", amount: 0.3)
+#assert(bent.torso.at(1) < 0)
+#let raised = raise-arms("standing", amount: 1)
+#assert(raised.left-upper-arm.at(2) > 0.9)
+#assert(raised.right-upper-arm.at(2) > 0.9)
+#let stretched = stretch-arms("running", amount: 1, side: "left")
+#assert(distance(stretched.left-lower-arm, unit(stretched.left-upper-arm)) < 0.00001)
+#let spread = spread-legs("standing", amount: 1)
+#assert(spread.left-upper-leg.at(0) > 0)
+#assert(spread.right-upper-leg.at(0) < 0)
+#let stepped = walk-legs("standing", amount: 0.7)
+#assert(stepped.left-upper-leg.at(1) < 0)
+#assert(stepped.right-upper-leg.at(1) > 0)
+#let waving = wave-arms("standing", amount: 1, side: "right")
+#assert(waving.right-upper-arm.at(2) > 0)

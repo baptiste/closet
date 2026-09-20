@@ -117,6 +117,35 @@ for natural scene variation. The function perturbs normalized 3D directions,
 so anatomical segment lengths remain unchanged. The complete strip is generated
 by `examples/variations.typ`.
 
+## Custom poses and gestures
+
+Build a pose directly with `pose(...)`; omitted directions retain the standing
+defaults. Gesture helpers take a built-in name or pose dictionary and return a
+new dictionary, so they compose:
+
+```typ
+#import "lib.typ": bend-torso, human, stretch-arms, tilt-head, walk-legs, wave-arms
+
+#let greeting = tilt-head(
+  wave-arms(
+    stretch-arms(
+      bend-torso(walk-legs("standing", amount: 0.45), amount: 0.12),
+      amount: 0.5,
+      side: "right",
+    ),
+    amount: 0.85,
+    side: "right",
+  ),
+  amount: -0.18,
+)
+#human(pose: greeting)
+```
+
+The available modifiers are `tilt-head`, `bend-torso`, `raise-arms`,
+`stretch-arms`, `spread-legs`, `walk-legs`, and `wave-arms`. See
+`examples/gestures.typ` and the compiled manual for direct construction,
+parameter ranges, and side selection.
+
 Pose vectors use `(x, y, z)`, where `x` is image-right in a front-facing pose,
 `y` is depth, and `z` is up. Each upper and lower limb segment has an independent
 3D direction. `poses` exposes the canonical dictionaries, while `joints(pose)`
